@@ -4,8 +4,12 @@ import 'package:hacker_news/view/home/home.dart';
 import 'package:provider/provider.dart';
 
 import 'core/provider/news_provider.dart';
+import 'core/utils/connectionStatusSingleton.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  ConnectionStatusSingleton connectionStatus = ConnectionStatusSingleton.getInstance();
+  connectionStatus.initialize();
   runApp(const MyApp());
 }
 
@@ -18,7 +22,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NewsProvider()),
-        ChangeNotifierProvider(create: (context) => ConnectivityProvider()),
+        // ChangeNotifierProvider(create: (context) => ConnectivityProvider()),
       ],
       child: MaterialApp(
         title: 'Flutter Demo',

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:hacker_news/core/custom_widgets/custom_text.dart';
 import 'package:hacker_news/core/model/story.dart';
@@ -10,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/provider/internet_connection/connectivity_provider.dart';
+import '../../core/utils/connectionStatusSingleton.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -22,10 +25,15 @@ class _HomeState extends State<Home> {
   bool loading = false;
   List<Story> stories = [];
   List<String> bookmarkedList = [];
+  late StreamSubscription _connectionChangeStream;
+
+  bool isOffline = false;
 
   @override
   void initState() {
-    Provider.of<ConnectivityProvider>(context, listen: false).startMonitoring();
+    //Provider.of<ConnectivityProvider>(context, listen: false).startMonitoring();
+    ConnectionStatusSingleton connectionStatus = ConnectionStatusSingleton.getInstance();
+    _connectionChangeStream = connectionStatus.connectionChange.listen(connectionChanged);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       getTopStories();
       getBookmarkedNews();
@@ -44,15 +52,18 @@ class _HomeState extends State<Home> {
       });
     });
   }
+  void connectionChanged(dynamic hasConnection) {
+    setState(() {
+      isOffline = !hasConnection;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final newsProvider = Provider.of<NewsProvider>(context);
     stories = newsProvider.topStories;
-    var isOnline = Provider.of<ConnectivityProvider>(context).isOnline;
 
-    return isOnline
-        ? Scaffold(
+    return (!isOffline)? Scaffold(
             backgroundColor: Colors.white,
             appBar: AppBar(
               backgroundColor: Colors.white,
@@ -92,8 +103,7 @@ class _HomeState extends State<Home> {
                         return newsItem(story: story, index: index);
                       },
                     ),
-            ))
-        : const NoInternetConnect();
+            )): NoInternetConnect();
   }
 
   Widget newsItem({required Story story, required int index}) {
